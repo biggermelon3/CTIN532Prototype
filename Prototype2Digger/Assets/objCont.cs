@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class objCont : MonoBehaviour
 {
@@ -15,6 +16,18 @@ public class objCont : MonoBehaviour
     private Vector3 originalPosition;
     private Vector3 throwDirection;
     private float startTime; //记录开始摇摆的时间
+    public int catchNumber;
+
+    public int playerID;
+    public float xLimit = 9;
+    public float yLimit = 2.6f;
+    public GameObject prefab;
+    public Text displayText;
+
+    public AudioSource audioSource;
+
+    public AudioClip fashe;  // 音频剪辑1，可以在Inspector中关联
+    public AudioClip zhuazhu;
 
     private void Start()
     {
@@ -22,18 +35,44 @@ public class objCont : MonoBehaviour
         AdjustStartTimeForSwinging();
     }
 
-        private void Update()
+    private void Update()
     {
+        displayText.text = "Player" + playerID.ToString()+ ": " + catchNumber.ToString();
         if (!isThrowing && !isRecovering)
         {
+            
             float rotationOffset = swingAmplitude * Mathf.Sin((Time.time - startTime) * swingFrequency);
             transform.eulerAngles = new Vector3(0, 0, rotationOffset);
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha1) && !isThrowing && !isRecovering)
+        if (Input.GetKeyDown(KeyCode.Alpha1) && !isThrowing && !isRecovering && playerID == 1)
         {
             isThrowing = true;
             throwDirection = -transform.up;
+            audioSource.PlayOneShot(fashe);
+        }
+        if (Input.GetKey(KeyCode.Alpha2) && !isThrowing && !isRecovering && playerID == 1)
+        {
+            swingFrequency = 2.0f;
+        }
+        if (Input.GetKeyUp(KeyCode.Alpha2) && !isThrowing && !isRecovering && playerID == 1)
+        {
+            swingFrequency = 1.0f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.DownArrow) && !isThrowing && !isRecovering && playerID == 2)
+        {
+            isThrowing = true;
+            throwDirection = -transform.up;
+            audioSource.PlayOneShot(fashe);
+        }
+        if (Input.GetKey(KeyCode.RightArrow) && !isThrowing && !isRecovering && playerID == 2)
+        {
+            swingFrequency = 2.0f;
+        }
+        if (Input.GetKeyUp(KeyCode.RightArrow) && !isThrowing && !isRecovering && playerID == 2)
+        {
+            swingFrequency = 1.0f;
         }
 
         if (isThrowing)
@@ -74,9 +113,17 @@ public class objCont : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isThrowing)
+        if (isThrowing && other.gameObject.CompareTag("gold"))
         {
             StartRecovery();
+            Destroy(other.gameObject);
+            audioSource.PlayOneShot(zhuazhu);
+            catchNumber++;
+            // 随机生成一个位置
+            Vector3 randomPosition = new Vector3(Random.Range(-xLimit, xLimit), Random.Range(-yLimit, yLimit), 0);
+
+            // 使用随机位置来实例化prefab
+            Instantiate(prefab, randomPosition, Quaternion.identity);
         }
     }
 
